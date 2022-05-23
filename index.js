@@ -111,10 +111,12 @@ async function run() {
   try {
     await client.connect();
     
-    const bookingCollection = client.db('doctors_portal').collection('bookings');
+    // const bookingCollection = client.db('doctors_portal').collection('bookings');
     const userCollection = client.db('carparts').collection('users');
     const productsCollection = client.db('carparts').collection('parts');
-    const paymentCollection = client.db('doctors_portal').collection('payments');
+    const orderCollection = client.db('carparts').collection('order');
+    const reviewCollection = client.db('carparts').collection('review');
+    // const paymentCollection = client.db('doctors_portal').collection('payments');
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -127,17 +129,17 @@ async function run() {
       }
     }
 
-    app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
-      const service = req.body;
-      const price = service.price;
-      const amount = price*100;
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount : amount,
-        currency: 'usd',
-        payment_method_types:['card']
-      });
-      res.send({clientSecret: paymentIntent.client_secret})
-    });
+    // app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+    //   const service = req.body;
+    //   const price = service.price;
+    //   const amount = price*100;
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount : amount,
+    //     currency: 'usd',
+    //     payment_method_types:['card']
+    //   });
+    //   res.send({clientSecret: paymentIntent.client_secret})
+    // });
 
     // app.get('/products', async (req, res) => {
     //   const query = {};
@@ -183,31 +185,31 @@ async function run() {
 
     // Warning: This is not the proper way to query multiple collection. 
     // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
-    app.get('/available', async (req, res) => {
-      const date = req.query.date;
+    // app.get('/available', async (req, res) => {
+    //   const date = req.query.date;
 
-      // step 1:  get all services
-      const services = await serviceCollection.find().toArray();
+    //   // step 1:  get all services
+    //   const services = await serviceCollection.find().toArray();
 
-      // step 2: get the booking of that day. output: [{}, {}, {}, {}, {}, {}]
-      const query = { date: date };
-      const bookings = await bookingCollection.find(query).toArray();
+    //   // step 2: get the booking of that day. output: [{}, {}, {}, {}, {}, {}]
+    //   const query = { date: date };
+    //   const bookings = await bookingCollection.find(query).toArray();
 
-      // step 3: for each service
-      services.forEach(service => {
-        // step 4: find bookings for that service. output: [{}, {}, {}, {}]
-        const serviceBookings = bookings.filter(book => book.treatment === service.name);
-        // step 5: select slots for the service Bookings: ['', '', '', '']
-        const bookedSlots = serviceBookings.map(book => book.slot);
-        // step 6: select those slots that are not in bookedSlots
-        const available = service.slots.filter(slot => !bookedSlots.includes(slot));
-        //step 7: set available to slots to make it easier 
-        service.slots = available;
-      });
+    //   // step 3: for each service
+    //   services.forEach(service => {
+    //     // step 4: find bookings for that service. output: [{}, {}, {}, {}]
+    //     const serviceBookings = bookings.filter(book => book.treatment === service.name);
+    //     // step 5: select slots for the service Bookings: ['', '', '', '']
+    //     const bookedSlots = serviceBookings.map(book => book.slot);
+    //     // step 6: select those slots that are not in bookedSlots
+    //     const available = service.slots.filter(slot => !bookedSlots.includes(slot));
+    //     //step 7: set available to slots to make it easier 
+    //     service.slots = available;
+    //   });
 
 
-      res.send(services);
-    })
+    //   res.send(services);
+    // })
 
     /**
      * API Naming Convention
@@ -219,55 +221,70 @@ async function run() {
      * app.delete('/booking/:id) //
     */
 
-    app.get('/booking', verifyJWT, async (req, res) => {
-      const patient = req.query.patient;
-      const decodedEmail = req.decoded.email;
-      if (patient === decodedEmail) {
-        const query = { patient: patient };
-        const bookings = await bookingCollection.find(query).toArray();
-        return res.send(bookings);
-      }
-      else {
-        return res.status(403).send({ message: 'forbidden access' });
-      }
+    // app.get('/booking', verifyJWT, async (req, res) => {
+    //   const patient = req.query.patient;
+    //   const decodedEmail = req.decoded.email;
+    //   if (patient === decodedEmail) {
+    //     const query = { patient: patient };
+    //     const bookings = await bookingCollection.find(query).toArray();
+    //     return res.send(bookings);
+    //   }
+    //   else {
+    //     return res.status(403).send({ message: 'forbidden access' });
+    //   }
+    // });
+
+    // app.get('/booking/:id', verifyJWT, async(req, res) =>{
+    //   const id = req.params.id;
+    //   const query = {_id: ObjectId(id)};
+    //   const booking = await bookingCollection.findOne(query);
+    //   res.send(booking);
+    // })
+
+
+    // app.post('/booking', async (req, res) => {
+    //   const booking = req.body;
+    //   const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
+    //   const exists = await bookingCollection.findOne(query);
+    //   if (exists) {
+    //     return res.send({ success: false, booking: exists })
+    //   }
+    //   const result = await bookingCollection.insertOne(booking);
+    //   console.log('sending email');
+    //   sendAppointmentEmail(booking);
+    //   return res.send({ success: true, result });
+    // });
+
+    // app.patch('/booking/:id', verifyJWT, async(req, res) =>{
+    //   const id  = req.params.id;
+    //   const payment = req.body;
+    //   const filter = {_id: ObjectId(id)};
+    //   const updatedDoc = {
+    //     $set: {
+    //       paid: true,
+    //       transactionId: payment.transactionId
+    //     }
+    //   }
+
+    //   const result = await paymentCollection.insertOne(payment);
+    //   const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+    //   res.send(updatedBooking);
+    // })
+    app.get('/review', async (req, res) => {
+      const review = await reviewCollection.find().toArray();
+      res.send(review);
+    })
+    app.post('/review', async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
     });
 
-    app.get('/booking/:id', verifyJWT, async(req, res) =>{
-      const id = req.params.id;
-      const query = {_id: ObjectId(id)};
-      const booking = await bookingCollection.findOne(query);
-      res.send(booking);
-    })
-
-
-    app.post('/booking', async (req, res) => {
-      const booking = req.body;
-      const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
-      const exists = await bookingCollection.findOne(query);
-      if (exists) {
-        return res.send({ success: false, booking: exists })
-      }
-      const result = await bookingCollection.insertOne(booking);
-      console.log('sending email');
-      sendAppointmentEmail(booking);
-      return res.send({ success: true, result });
+    app.post('/order', async (req, res) => {
+      const order = req.body;
+      const result = await orderCollection.insertOne(order);
+      res.send(result);
     });
-
-    app.patch('/booking/:id', verifyJWT, async(req, res) =>{
-      const id  = req.params.id;
-      const payment = req.body;
-      const filter = {_id: ObjectId(id)};
-      const updatedDoc = {
-        $set: {
-          paid: true,
-          transactionId: payment.transactionId
-        }
-      }
-
-      const result = await paymentCollection.insertOne(payment);
-      const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
-      res.send(updatedBooking);
-    })
 
     app.get('/product', async (req, res) => {
       const products = await productsCollection.find().toArray();
@@ -280,12 +297,32 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
-      const result = await doctorCollection.deleteOne(filter);
-      res.send(result);
+    app.get('/product/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const products = await productsCollection.findOne(query);
+      res.send(products);
+    });
+
+    app.put('/product/:id', async (req, res) => {
+      const id = req.params.id;
+      const this_product = await productsCollection.findOne({_id: ObjectId(id)})
+      console.log(req.body)
+      const product = await productsCollection.updateOne(
+        { _id: ObjectId(id) }, 
+        { $set: { quantity: this_product.quantity - req.body.quantity } }, 
+        { upsert: true }
+      )
+      res.send(this_product)
     })
+
+    // app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const result = await doctorCollection.deleteOne(filter);
+    //   res.send(result);
+    // })
 
   }
   finally {
