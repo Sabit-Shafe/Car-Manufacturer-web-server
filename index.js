@@ -5,7 +5,7 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // var nodemailer = require('nodemailer');
 // var sgTransport = require('nodemailer-sendgrid-transport');
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -41,70 +41,70 @@ const emailSenderOptions = {
 
 // const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
 
-function sendAppointmentEmail(booking) {
-  const { patient, patientName, treatment, date, slot } = booking;
+// function sendAppointmentEmail(booking) {
+//   const { patient, patientName, treatment, date, slot } = booking;
 
-  var email = {
-    from: process.env.EMAIL_SENDER,
-    to: patient,
-    subject: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-    text: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-    html: `
-      <div>
-        <p> Hello ${patientName}, </p>
-        <h3>Your Appointment for ${treatment} is confirmed</h3>
-        <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+//   var email = {
+//     from: process.env.EMAIL_SENDER,
+//     to: patient,
+//     subject: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
+//     text: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
+//     html: `
+//       <div>
+//         <p> Hello ${patientName}, </p>
+//         <h3>Your Appointment for ${treatment} is confirmed</h3>
+//         <p>Looking forward to seeing you on ${date} at ${slot}.</p>
         
-        <h3>Our Address</h3>
-        <p>Andor Killa Bandorban</p>
-        <p>Bangladesh</p>
-        <a href="https://web.programming-hero.com/">unsubscribe</a>
-      </div>
-    `
-  };
+//         <h3>Our Address</h3>
+//         <p>Andor Killa Bandorban</p>
+//         <p>Bangladesh</p>
+//         <a href="https://web.programming-hero.com/">unsubscribe</a>
+//       </div>
+//     `
+//   };
 
-  emailClient.sendMail(email, function (err, info) {
-    if (err) {
-      console.log(err);
-    }
-    else {
-      console.log('Message sent: ', info);
-    }
-  });
+//   emailClient.sendMail(email, function (err, info) {
+//     if (err) {
+//       console.log(err);
+//     }
+//     else {
+//       console.log('Message sent: ', info);
+//     }
+//   });
 
-}
-function sendPaymentConfirmationEmail(booking) {
-  const { patient, patientName, treatment, date, slot } = booking;
+// }
+// function sendPaymentConfirmationEmail(booking) {
+//   const { patient, patientName, treatment, date, slot } = booking;
 
-  var email = {
-    from: process.env.EMAIL_SENDER,
-    to: patient,
-    subject: `We have received your payment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-    text: `Your payment for this Appointment ${treatment} is on ${date} at ${slot} is Confirmed`,
-    html: `
-      <div>
-        <p> Hello ${patientName}, </p>
-        <h3>Thank you for your payment . </h3>
-        <h3>We have received your payment</h3>
-        <p>Looking forward to seeing you on ${date} at ${slot}.</p>
-        <h3>Our Address</h3>
-        <p>Andor Killa Bandorban</p>
-        <p>Bangladesh</p>
-        <a href="https://web.programming-hero.com/">unsubscribe</a>
-      </div>
-    `
-  };
+//   var email = {
+//     from: process.env.EMAIL_SENDER,
+//     to: patient,
+//     subject: `We have received your payment for ${treatment} is on ${date} at ${slot} is Confirmed`,
+//     text: `Your payment for this Appointment ${treatment} is on ${date} at ${slot} is Confirmed`,
+//     html: `
+//       <div>
+//         <p> Hello ${patientName}, </p>
+//         <h3>Thank you for your payment . </h3>
+//         <h3>We have received your payment</h3>
+//         <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+//         <h3>Our Address</h3>
+//         <p>Andor Killa Bandorban</p>
+//         <p>Bangladesh</p>
+//         <a href="https://web.programming-hero.com/">unsubscribe</a>
+//       </div>
+//     `
+  // };
 
-  emailClient.sendMail(email, function (err, info) {
-    if (err) {
-      console.log(err);
-    }
-    else {
-      console.log('Message sent: ', info);
-    }
-  });
+//   emailClient.sendMail(email, function (err, info) {
+//     if (err) {
+//       console.log(err);
+//     }
+//     else {
+//       console.log('Message sent: ', info);
+//     }
+//   });
 
-}
+// }
 
 
 async function run() {
@@ -116,7 +116,7 @@ async function run() {
     const productsCollection = client.db('carparts').collection('parts');
     const orderCollection = client.db('carparts').collection('order');
     const reviewCollection = client.db('carparts').collection('review');
-    // const paymentCollection = client.db('doctors_portal').collection('payments');
+    const paymentCollection = client.db('carparts').collection('payments');
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -129,17 +129,17 @@ async function run() {
       }
     }
 
-    // app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
-    //   const service = req.body;
-    //   const price = service.price;
-    //   const amount = price*100;
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount : amount,
-    //     currency: 'usd',
-    //     payment_method_types:['card']
-    //   });
-    //   res.send({clientSecret: paymentIntent.client_secret})
-    // });
+    app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+      const order = req.body;
+      const price = order.price;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount : amount,
+        currency: 'usd',
+        payment_method_types:['card']
+      });
+      res.send({clientSecret: paymentIntent.client_secret})
+    });
 
     // app.get('/products', async (req, res) => {
     //   const query = {};
@@ -221,55 +221,45 @@ async function run() {
      * app.delete('/booking/:id) //
     */
 
-    // app.get('/booking', verifyJWT, async (req, res) => {
-    //   const patient = req.query.patient;
-    //   const decodedEmail = req.decoded.email;
-    //   if (patient === decodedEmail) {
-    //     const query = { patient: patient };
-    //     const bookings = await bookingCollection.find(query).toArray();
-    //     return res.send(bookings);
-    //   }
-    //   else {
-    //     return res.status(403).send({ message: 'forbidden access' });
-    //   }
-    // });
+    app.get('/order', verifyJWT, async (req, res) => {
+      const customer = req.query.customer;
+      const decodedEmail = req.decoded.email;
+      if (customer === decodedEmail) {
+        const query = {};
+        const orders = await orderCollection.find(query).toArray();
+        return res.send(orders);
+      }
+      else {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+    });
 
-    // app.get('/booking/:id', verifyJWT, async(req, res) =>{
-    //   const id = req.params.id;
-    //   const query = {_id: ObjectId(id)};
-    //   const booking = await bookingCollection.findOne(query);
-    //   res.send(booking);
-    // })
+    app.get('/order/:id',verifyJWT, async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const order = await orderCollection.findOne(query);
+      res.send(order);
+    })
 
 
-    // app.post('/booking', async (req, res) => {
-    //   const booking = req.body;
-    //   const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
-    //   const exists = await bookingCollection.findOne(query);
-    //   if (exists) {
-    //     return res.send({ success: false, booking: exists })
-    //   }
-    //   const result = await bookingCollection.insertOne(booking);
-    //   console.log('sending email');
-    //   sendAppointmentEmail(booking);
-    //   return res.send({ success: true, result });
-    // });
+    
 
-    // app.patch('/booking/:id', verifyJWT, async(req, res) =>{
-    //   const id  = req.params.id;
-    //   const payment = req.body;
-    //   const filter = {_id: ObjectId(id)};
-    //   const updatedDoc = {
-    //     $set: {
-    //       paid: true,
-    //       transactionId: payment.transactionId
-    //     }
-    //   }
+    app.patch('/order/:id', verifyJWT, async(req, res) =>{
+      const id  = req.params.id;
+      const payment = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId
+        }
+      }
 
-    //   const result = await paymentCollection.insertOne(payment);
-    //   const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
-    //   res.send(updatedBooking);
-    // })
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+      res.send(updatedOrder);
+    })
+
     app.get('/review', async (req, res) => {
       const review = await reviewCollection.find().toArray();
       res.send(review);
@@ -280,7 +270,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/order', async (req, res) => {
+    app.post('/order',verifyJWT,  async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       res.send(result);
@@ -317,12 +307,24 @@ async function run() {
       res.send(this_product)
     })
 
-    // app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
+    // app.delete('/order/:id', verifyJWT, verifyAdmin, async (req, res) => {
     //   const email = req.params.email;
     //   const filter = { email: email };
     //   const result = await doctorCollection.deleteOne(filter);
     //   res.send(result);
     // })
+    app.delete('/order/:id', async (req, res) => {
+      const result = await orderCollection.deleteOne(
+        { _id: ObjectId(req.params.id) },
+      );
+      res.send(result);
+    });
+    app.delete('/product/:id', async (req, res) => {
+      const result = await productsCollection.deleteOne(
+        { _id: ObjectId(req.params.id) },
+      );
+      res.send(result);
+    });
 
   }
   finally {
