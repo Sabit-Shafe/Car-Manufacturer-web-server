@@ -206,6 +206,7 @@ async function run() {
       );
       res.send(result);
     });
+
     app.delete('/product/:id',verifyJWT, async (req, res) => {
       const result = await productsCollection.deleteOne(
         { _id: ObjectId(req.params.id) },
@@ -213,6 +214,7 @@ async function run() {
       res.send(result);
     });
 
+    
     app.get('/support', async (req, res) => {
       const query = {};
       const cursor = supportCollection.find(query);
