@@ -117,6 +117,8 @@ async function run() {
     const orderCollection = client.db('carparts').collection('order');
     const reviewCollection = client.db('carparts').collection('review');
     const paymentCollection = client.db('carparts').collection('payments');
+    const supportCollection = client.db('carparts').collection('support');
+    const myprofileCollection = client.db('carparts').collection('myprofile');
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -153,6 +155,21 @@ async function run() {
       res.send(users);
     });
 
+    // app.get('/user', verifyJWT, async (req, res) => {
+    //   const email = req.query.email;
+    //   const decodedEmail = req.decoded.email;
+    //   if (email === decodedEmail) {
+    //     const query = {email: email};
+    //     const users = await userCollection.find(query).toArray();
+    //     return res.send(users);
+    //   }
+    //   else {
+    //     return res.status(403).send({ message: 'forbidden access' });
+    //   }
+    //   // const users = await userCollection.find().toArray();
+    //   // res.send(users);
+    // });
+
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
@@ -179,37 +196,9 @@ async function run() {
         $set: user,
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
-      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' })
       res.send({ result, token });
     });
-
-    // Warning: This is not the proper way to query multiple collection. 
-    // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
-    // app.get('/available', async (req, res) => {
-    //   const date = req.query.date;
-
-    //   // step 1:  get all services
-    //   const services = await serviceCollection.find().toArray();
-
-    //   // step 2: get the booking of that day. output: [{}, {}, {}, {}, {}, {}]
-    //   const query = { date: date };
-    //   const bookings = await bookingCollection.find(query).toArray();
-
-    //   // step 3: for each service
-    //   services.forEach(service => {
-    //     // step 4: find bookings for that service. output: [{}, {}, {}, {}]
-    //     const serviceBookings = bookings.filter(book => book.treatment === service.name);
-    //     // step 5: select slots for the service Bookings: ['', '', '', '']
-    //     const bookedSlots = serviceBookings.map(book => book.slot);
-    //     // step 6: select those slots that are not in bookedSlots
-    //     const available = service.slots.filter(slot => !bookedSlots.includes(slot));
-    //     //step 7: set available to slots to make it easier 
-    //     service.slots = available;
-    //   });
-
-
-    //   res.send(services);
-    // })
 
     /**
      * API Naming Convention
@@ -222,10 +211,10 @@ async function run() {
     */
 
     app.get('/order', verifyJWT, async (req, res) => {
-      const customer = req.query.customer;
+      const email = req.query.email;
       const decodedEmail = req.decoded.email;
-      if (customer === decodedEmail) {
-        const query = {};
+      if (email === decodedEmail) {
+        const query = {email: email};
         const orders = await orderCollection.find(query).toArray();
         return res.send(orders);
       }
@@ -286,6 +275,16 @@ async function run() {
       const result = await productsCollection.insertOne(products);
       res.send(result);
     });
+    app.post('/myprofile', async (req, res) => {
+      const profile = req.body;
+      const result = await myprofileCollection.insertOne(profile);
+      res.send(result);
+    });
+    app.get('/myprofile',async (req, res) => {
+      const result = await myprofileCollection.find().toArray();
+      res.send(result);
+    })
+
 
     app.get('/product/:id', async (req, res) => {
       const id = req.params.id;
@@ -324,6 +323,13 @@ async function run() {
         { _id: ObjectId(req.params.id) },
       );
       res.send(result);
+    });
+
+    app.get('/support', async (req, res) => {
+      const query = {};
+      const cursor = supportCollection.find(query);
+      const support = await cursor.toArray();
+      res.send(support);
     });
 
   }
