@@ -31,12 +31,6 @@ function verifyJWT(req, res, next) {
   });
 }
 
-const emailSenderOptions = {
-  auth: {
-    api_key: process.env.EMAIL_SENDER_KEY
-  }
-}
-
 async function run() {
   try {
     await client.connect();
@@ -231,6 +225,7 @@ async function run() {
 
   }
 }
+
 
 run().catch(console.dir);
 
