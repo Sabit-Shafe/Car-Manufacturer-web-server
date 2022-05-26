@@ -124,9 +124,6 @@ async function run() {
     //   res.send(order);
     // })
 
-
-    
-
     app.patch('/order/:id', verifyJWT, async(req, res) =>{
       const id  = req.params.id;
       const payment = req.body;
@@ -147,6 +144,7 @@ async function run() {
       const review = await reviewCollection.find().toArray();
       res.send(review);
     })
+
     app.post('/review',verifyJWT, async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
@@ -168,17 +166,19 @@ async function run() {
       const products = req.body;
       const result = await productsCollection.insertOne(products);
       res.send(result);
+
     });
+
     app.post('/myprofile',verifyJWT, async (req, res) => {
       const profile = req.body;
       const result = await myprofileCollection.insertOne(profile);
       res.send(result);
     });
+
     app.get('/myprofile',async (req, res) => {
       const result = await myprofileCollection.find().toArray();
       res.send(result);
-    })
-
+    });
 
     app.get('/product/:id', async (req, res) => {
       const id = req.params.id;
@@ -198,7 +198,7 @@ async function run() {
         { upsert: true }
       )
       res.send(this_product)
-    })
+    });
 
     app.delete('/order/:id',verifyJWT, async (req, res) => {
       const result = await orderCollection.deleteOne(
