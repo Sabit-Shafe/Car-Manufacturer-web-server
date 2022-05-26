@@ -117,14 +117,14 @@ async function run() {
       }
     });
 
-    // app.get('/order/:id',verifyJWT, async(req, res) =>{
-    //   const id = req.params.id;
-    //   const query = {_id: ObjectId(id)};
-    //   const order = await orderCollection.findOne(query);
-    //   res.send(order);
-    // })
+    app.get('/order/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const order = await orderCollection.findOne(query);
+      res.send(order);
+    })
 
-    app.patch('/order/:id', verifyJWT, async(req, res) =>{
+    app.patch('/order/:id', async(req, res) =>{
       const id  = req.params.id;
       const payment = req.body;
       const filter = {_id: ObjectId(id)};
@@ -214,7 +214,7 @@ async function run() {
       res.send(result);
     });
 
-    
+
     app.get('/support', async (req, res) => {
       const query = {};
       const cursor = supportCollection.find(query);
