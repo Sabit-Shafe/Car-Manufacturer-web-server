@@ -3,8 +3,6 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-// var nodemailer = require('nodemailer');
-// var sgTransport = require('nodemailer-sendgrid-transport');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
@@ -39,79 +37,10 @@ const emailSenderOptions = {
   }
 }
 
-// const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
-
-// function sendAppointmentEmail(booking) {
-//   const { patient, patientName, treatment, date, slot } = booking;
-
-//   var email = {
-//     from: process.env.EMAIL_SENDER,
-//     to: patient,
-//     subject: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-//     text: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-//     html: `
-//       <div>
-//         <p> Hello ${patientName}, </p>
-//         <h3>Your Appointment for ${treatment} is confirmed</h3>
-//         <p>Looking forward to seeing you on ${date} at ${slot}.</p>
-        
-//         <h3>Our Address</h3>
-//         <p>Andor Killa Bandorban</p>
-//         <p>Bangladesh</p>
-//         <a href="https://web.programming-hero.com/">unsubscribe</a>
-//       </div>
-//     `
-//   };
-
-//   emailClient.sendMail(email, function (err, info) {
-//     if (err) {
-//       console.log(err);
-//     }
-//     else {
-//       console.log('Message sent: ', info);
-//     }
-//   });
-
-// }
-// function sendPaymentConfirmationEmail(booking) {
-//   const { patient, patientName, treatment, date, slot } = booking;
-
-//   var email = {
-//     from: process.env.EMAIL_SENDER,
-//     to: patient,
-//     subject: `We have received your payment for ${treatment} is on ${date} at ${slot} is Confirmed`,
-//     text: `Your payment for this Appointment ${treatment} is on ${date} at ${slot} is Confirmed`,
-//     html: `
-//       <div>
-//         <p> Hello ${patientName}, </p>
-//         <h3>Thank you for your payment . </h3>
-//         <h3>We have received your payment</h3>
-//         <p>Looking forward to seeing you on ${date} at ${slot}.</p>
-//         <h3>Our Address</h3>
-//         <p>Andor Killa Bandorban</p>
-//         <p>Bangladesh</p>
-//         <a href="https://web.programming-hero.com/">unsubscribe</a>
-//       </div>
-//     `
-  // };
-
-//   emailClient.sendMail(email, function (err, info) {
-//     if (err) {
-//       console.log(err);
-//     }
-//     else {
-//       console.log('Message sent: ', info);
-//     }
-//   });
-
-// }
-
-
 async function run() {
   try {
     await client.connect();
     
-    // const bookingCollection = client.db('doctors_portal').collection('bookings');
     const userCollection = client.db('carparts').collection('users');
     const productsCollection = client.db('carparts').collection('parts');
     const orderCollection = client.db('carparts').collection('order');
@@ -143,32 +72,13 @@ async function run() {
       res.send({clientSecret: paymentIntent.client_secret})
     });
 
-    // app.get('/products', async (req, res) => {
-    //   const query = {};
-    //   const cursor = serviceCollection.find(query).project({ name: 1 });
-    //   const services = await cursor.toArray();
-    //   res.send(services);
-    // });
 
     app.get('/user', verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray();
       res.send(users);
     });
 
-    // app.get('/user', verifyJWT, async (req, res) => {
-    //   const email = req.query.email;
-    //   const decodedEmail = req.decoded.email;
-    //   if (email === decodedEmail) {
-    //     const query = {email: email};
-    //     const users = await userCollection.find(query).toArray();
-    //     return res.send(users);
-    //   }
-    //   else {
-    //     return res.status(403).send({ message: 'forbidden access' });
-    //   }
-    //   // const users = await userCollection.find().toArray();
-    //   // res.send(users);
-    // });
+  
 
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
@@ -200,16 +110,6 @@ async function run() {
       res.send({ result, token });
     });
 
-    /**
-     * API Naming Convention
-     * app.get('/booking') // get all bookings in this collection. or get more than one or by filter
-     * app.get('/booking/:id') // get a specific booking 
-     * app.post('/booking') // add a new booking
-     * app.patch('/booking/:id) //
-     * app.put('/booking/:id') // upsert ==> update (if exists) or insert (if doesn't exist)
-     * app.delete('/booking/:id) //
-    */
-
     app.get('/order', verifyJWT, async (req, res) => {
       const email = req.query.email;
       const decodedEmail = req.decoded.email;
@@ -223,12 +123,12 @@ async function run() {
       }
     });
 
-    app.get('/order/:id',verifyJWT, async(req, res) =>{
-      const id = req.params.id;
-      const query = {_id: ObjectId(id)};
-      const order = await orderCollection.findOne(query);
-      res.send(order);
-    })
+    // app.get('/order/:id',verifyJWT, async(req, res) =>{
+    //   const id = req.params.id;
+    //   const query = {_id: ObjectId(id)};
+    //   const order = await orderCollection.findOne(query);
+    //   res.send(order);
+    // })
 
 
     
@@ -253,7 +153,7 @@ async function run() {
       const review = await reviewCollection.find().toArray();
       res.send(review);
     })
-    app.post('/review', async (req, res) => {
+    app.post('/review',verifyJWT, async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
       res.send(result);
@@ -275,7 +175,7 @@ async function run() {
       const result = await productsCollection.insertOne(products);
       res.send(result);
     });
-    app.post('/myprofile', async (req, res) => {
+    app.post('/myprofile',verifyJWT, async (req, res) => {
       const profile = req.body;
       const result = await myprofileCollection.insertOne(profile);
       res.send(result);
@@ -306,19 +206,13 @@ async function run() {
       res.send(this_product)
     })
 
-    // app.delete('/order/:id', verifyJWT, verifyAdmin, async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const result = await doctorCollection.deleteOne(filter);
-    //   res.send(result);
-    // })
-    app.delete('/order/:id', async (req, res) => {
+    app.delete('/order/:id',verifyJWT, async (req, res) => {
       const result = await orderCollection.deleteOne(
         { _id: ObjectId(req.params.id) },
       );
       res.send(result);
     });
-    app.delete('/product/:id', async (req, res) => {
+    app.delete('/product/:id',verifyJWT, async (req, res) => {
       const result = await productsCollection.deleteOne(
         { _id: ObjectId(req.params.id) },
       );
